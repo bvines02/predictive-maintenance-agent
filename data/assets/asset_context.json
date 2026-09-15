@@ -1,0 +1,62 @@
+[
+  {
+    "asset_id": "pump-01",
+    "asset_type": "Centrifugal pump",
+    "system": "Primary feedwater",
+    "criticality": "High",
+    "duty": "Continuous",
+    "redundancy": "None",
+    "single_point_of_failure": true,
+    "known_failure_modes": ["Bearing wear", "Seal failure", "Cavitation"],
+    "operational_workaround": "None - process must shut down if this pump fails",
+    "maintenance_strategy": "Condition-based"
+  },
+  {
+    "asset_id": "pump-02",
+    "asset_type": "Centrifugal pump",
+    "system": "Secondary cooling",
+    "criticality": "Medium",
+    "duty": "Continuous",
+    "redundancy": "1 standby pump (pump-02b)",
+    "single_point_of_failure": false,
+    "known_failure_modes": ["Bearing wear", "Seal failure"],
+    "operational_workaround": "Switch over to pump-02b within 15 minutes",
+    "maintenance_strategy": "Condition-based"
+  },
+  {
+    "asset_id": "fan-11",
+    "asset_type": "Cooling fan",
+    "system": "HVAC - server room",
+    "criticality": "Low",
+    "duty": "Continuous",
+    "redundancy": "2 additional fans in bank (fan-12, fan-13)",
+    "single_point_of_failure": false,
+    "known_failure_modes": ["Bearing wear", "Motor overheating"],
+    "operational_workaround": "Remaining fans maintain airflow at reduced margin",
+    "maintenance_strategy": "Run-to-failure"
+  },
+  {
+    "asset_id": "compressor-05",
+    "asset_type": "Reciprocating compressor",
+    "system": "Instrument air",
+    "criticality": "High",
+    "duty": "Continuous",
+    "redundancy": "1 standby compressor (compressor-06)",
+    "single_point_of_failure": false,
+    "known_failure_modes": ["Valve failure", "Piston ring wear", "Overheating"],
+    "operational_workaround": "Standby compressor auto-starts on pressure drop",
+    "maintenance_strategy": "Preventive + condition-based"
+  },
+  {
+    "asset_id": "conveyor-03",
+    "asset_type": "Belt conveyor motor",
+    "system": "Material handling line 3",
+    "criticality": "Medium",
+    "duty": "Intermittent",
+    "redundancy": "None",
+    "single_point_of_failure": true,
+    "known_failure_modes": ["Belt slippage", "Motor winding failure", "Roller wear"],
+    "operational_workaround": "Manual material transfer possible at reduced throughput",
+    "maintenance_strategy": "Preventive"
+  }
+]
