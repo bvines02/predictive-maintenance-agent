@@ -16,5 +16,9 @@ models/*
 !data/processed/.gitkeep
 !models/.gitkeep
 
+# AI4I 2020 dataset is small (~500KB) and CC BY 4.0 - committed so a fresh
+# clone works without a manual download step
+!data/raw/ai4i2020.csv
+
 # OS
 .DS_Store

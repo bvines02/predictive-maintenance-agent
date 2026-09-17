@@ -56,11 +56,9 @@ This is enforced by more than convention — every function on the decision path
 - **Class balance:** 339 failures out of 10,000 rows — a 3.39% failure rate, ~28.5:1 imbalance. This shapes the whole modeling approach: `class_weight="balanced"` at training time, and precision/recall/F1/ROC AUC (not accuracy) at evaluation time.
 - **Columns used as model features:** `Air temperature [K]`, `Process temperature [K]`, `Rotational speed [rpm]`, `Torque [Nm]`, `Tool wear [min]`, plus three engineered features (below). `TWF`/`HDF`/`PWF`/`OSF`/`RNF` (which failure mode occurred) are deliberately **excluded** — they're outcomes, and using them as inputs would be label leakage: you'd never know the failure mode before the failure happens.
 
-**To download it:**
-1. https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset
-2. Download and unzip; place `ai4i2020.csv` at `data/raw/ai4i2020.csv`
+**Included in this repo:** `data/raw/ai4i2020.csv` is committed directly (it's ~500KB and CC BY 4.0 licensed), so a fresh clone works with no download step. Everything else under `data/raw/` stays git-ignored - this is a deliberate, named exception in `.gitignore`, not a change to the general rule.
 
-`data/raw/` is git-ignored, so this step is required on every fresh clone.
+Source, for attribution: https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset
 
 ## Setup
 
@@ -212,7 +210,7 @@ pytest -q
 
 | Path | Purpose |
 |---|---|
-| `data/raw/` | Original telemetry (git-ignored - download per the Dataset section). |
+| `data/raw/` | Original telemetry. `ai4i2020.csv` is committed (see Dataset section); anything else here is git-ignored. |
 | `data/processed/` | Reserved for data derived by code from `raw/`. |
 | `data/assets/asset_context.json` | Example asset context: criticality, redundancy, failure modes, workarounds. |
 | `models/` | Saved trained models (`.pkl`, git-ignored). |
