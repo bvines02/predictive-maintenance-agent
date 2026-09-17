@@ -20,5 +20,11 @@ models/*
 # clone works without a manual download step
 !data/raw/ai4i2020.csv
 
+# NASA C-MAPSS FD001 dataset (~5.7MB) - same reasoning as ai4i2020.csv above.
+# FD001 only for now; FD002-FD004 stay ignored until V2 needs them.
+!data/raw/cmapss/
+!data/raw/cmapss/FD001/
+!data/raw/cmapss/FD001/*.txt
+
 # OS
 .DS_Store
