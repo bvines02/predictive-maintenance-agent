@@ -1,5 +1,7 @@
 # Predictive Maintenance Agent
 
+[![Tests](https://github.com/bvines02/predictive-maintenance-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/bvines02/predictive-maintenance-agent/actions/workflows/tests.yml)
+
 A predictive maintenance decision-support system: it predicts equipment failure risk from telemetry, applies deterministic maintenance rules informed by asset context, and uses an LLM strictly to *explain* the resulting decision in maintenance language — with a human reviewer as the final step for anything high-risk.
 
 This is a learning project built to practice real AI engineering architecture, not a notebook-only ML demo. The emphasis throughout is on keeping the machine-learned, the rule-based, and the generative parts of the system cleanly separated, testable independently, and safe to compose.

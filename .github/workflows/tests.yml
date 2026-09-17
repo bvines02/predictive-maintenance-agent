@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # tests/test_api.py exercises the real saved model, so it must exist.
+      # This trains from the AI4I dataset already committed in data/raw/ -
+      # no download step needed.
+      - name: Train model
+        run: python -m src.train_model
+
+      - name: Run tests
+        run: pytest -q
