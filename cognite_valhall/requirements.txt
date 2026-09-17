@@ -1,0 +1,33 @@
+# --- Cognite access -------------------------------------------------------
+# Pinned to the 8.x major: the datapoints and credential-provider APIs this
+# project uses changed shape across majors (for example, LatestDatapoint's
+# `timestamp` became a scalar datetime in 8.x, and DatapointsList is a
+# collections.UserList rather than a builtin list). An unpinned major would
+# break those call sites silently.
+cognite-sdk>=8.17,<9
+
+# msal is what the SDK uses for the device-code and interactive OAuth flows.
+# It is a transitive dependency, declared explicitly because our auth path
+# depends on it directly.
+msal>=1.31
+
+# --- Data handling --------------------------------------------------------
+pandas>=2.2
+pyarrow>=16.0          # Parquet engine; also used directly for streamed writes
+numpy>=1.26
+
+# --- Configuration --------------------------------------------------------
+python-dotenv>=1.0     # loads .env so secrets stay out of source
+
+# --- Knowledge graph (notebooks/build_knowledge_graph.py) -----------------
+networkx>=3.2
+
+# --- Optional, for exploration -------------------------------------------
+# Polars reads the datapoint Parquet files directly and lazily; useful once the
+# dataset outgrows comfortable pandas memory.
+polars>=1.0
+jupyter>=1.0
+matplotlib>=3.8
+
+# --- Testing --------------------------------------------------------------
+pytest>=8.0

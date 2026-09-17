@@ -1,0 +1,29 @@
+# --- Secrets: never commit ------------------------------------------------
+.env
+.cognite_token_cache.json
+*.token_cache.json
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# --- Downloaded data ------------------------------------------------------
+# The dataset is reproducible from the pipeline, so it is not source code and
+# does not belong in git. Telemetry Parquet in particular gets large fast, and
+# binary blobs in git history are effectively permanent.
+data/**/*.parquet
+data/**/*.csv
+data/files/documents/*
+data/data_quality_report.md
+
+# Keep the directory structure so a fresh clone has somewhere to write.
+!data/**/.gitkeep
+
+# --- OS -------------------------------------------------------------------
+.DS_Store
+Thumbs.db
