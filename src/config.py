@@ -19,6 +19,8 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 MODELS_DIR = PROJECT_ROOT / "models"
 
+RESULTS_DIR = PROJECT_ROOT / "results"
+
 # The AI4I 2020 Predictive Maintenance Dataset (see README.md "Dataset" section).
 RAW_DATA_FILE = RAW_DATA_DIR / "ai4i2020.csv"
 
@@ -33,3 +35,8 @@ CMAPSS_FD001_RUL_FILE = CMAPSS_FD001_DIR / "RUL_FD001.txt"
 RUL_BASELINE_MODEL_PATH = MODELS_DIR / "random_forest_baseline.joblib"
 RUL_BASELINE_FEATURES_PATH = MODELS_DIR / "random_forest_baseline_features.json"
 RUL_BASELINE_ARTIFACTS_DIR = ARTIFACTS_DIR / "rul_baseline"
+
+# V2 Step 7 - operational error analysis outputs.
+ERROR_ANALYSIS_ARTIFACTS_DIR = ARTIFACTS_DIR / "error_analysis"
+VALIDATION_PREDICTIONS_PATH = RESULTS_DIR / "validation_predictions.csv"
+ERROR_BY_RUL_BAND_PATH = RESULTS_DIR / "error_by_rul_band.csv"

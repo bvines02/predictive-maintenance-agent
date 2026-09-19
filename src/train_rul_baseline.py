@@ -78,18 +78,24 @@ VALIDATION_FRACTION = 0.2
 INCLUDE_TIME_CYCLES = True
 
 
-def build_feature_columns(train_df: pd.DataFrame) -> list[str]:
-    """Decide the model's feature list from training data only.
+def get_kept_sensor_columns(train_df: pd.DataFrame) -> list[str]:
+    """The Step 4 sensor screening result: sensors worth keeping, from training data only.
 
-    Sensor screening (src/sensor_screening.py) is re-run here so that the
-    feature list is always derived from actual data, not hard-coded - if
-    the training data changes, this list updates with it. It is run on
-    `train_df` specifically (never on validation rows or the official test
-    set) - see the module docstring's leakage note.
+    Re-run here (rather than hard-coded) so the result always reflects
+    actual data - if the training data changes, this list updates with it.
+    Shared by both the baseline (this module) and the temporal feature
+    step (src/train_rul_temporal.py), so both models start from the exact
+    same sensor set - see the module docstring's leakage note on why this
+    must only ever run on training data.
     """
     sensor_columns = [col for col in SENSOR_COLUMNS if col in train_df.columns]
     screening_table = screen_sensors(train_df, sensor_columns=sensor_columns)
-    kept_sensors = sensors_with_status(screening_table, STATUS_KEEP)
+    return sensors_with_status(screening_table, STATUS_KEEP)
+
+
+def build_feature_columns(train_df: pd.DataFrame) -> list[str]:
+    """Decide the baseline model's feature list: current-cycle features only."""
+    kept_sensors = get_kept_sensor_columns(train_df)
 
     feature_columns = list(OPERATIONAL_SETTING_COLUMNS) + kept_sensors
     if INCLUDE_TIME_CYCLES:
