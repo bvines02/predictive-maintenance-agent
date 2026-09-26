@@ -100,8 +100,11 @@ export function LlmStage({ engine, i, decision, params }: Props) {
 
           {state.status === 'offline' && (
             <div className="text-sm text-ink-2">
-              <p className="mb-2">The API isn't running, so there is no LLM step. Everything above still works: it doesn't depend on the LLM.</p>
-              <p className="mb-1 text-xs">From the repo root:</p>
+              <p className="mb-2">
+                The explanation API isn't reachable from here. It runs on your own machine, next to your API key. Everything above
+                still works, because none of it depends on the LLM.
+              </p>
+              <p className="mb-1 text-xs">To enable this step, run the app locally and start the API from the repo root:</p>
               <pre className="overflow-x-auto rounded bg-surface px-2 py-1.5 font-mono text-xs">uvicorn src.api:app --port 8000</pre>
             </div>
           )}

@@ -82,11 +82,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="z-30 sm:sticky sm:top-0 border-b border-line bg-page/95 backdrop-blur">
+      <header style={{ top: 'env(safe-area-inset-top, 0px)' }} className="z-30 sm:sticky border-b border-line bg-page/95 backdrop-blur">
         <div className="mx-auto max-w-[1400px] px-4 pb-3 pt-3 sm:px-6">
           <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2">
             <div className="mr-auto">
-              <h1 className="text-lg font-bold leading-tight">Pipeline Explorer</h1>
+              <h1 className="text-lg font-bold leading-tight">Turbofan Pipeline Explorer</h1>
               <p className="text-xs text-ink-3">NASA C-MAPSS FD001 · telemetry → ML → deterministic rules → LLM explanation</p>
             </div>
             <div className="flex items-center gap-2 text-sm">
