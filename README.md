@@ -6,6 +6,8 @@ A predictive maintenance decision-support system: it predicts equipment failure 
 
 This is a learning project built to practice real AI engineering architecture, not a notebook-only ML demo. The emphasis throughout is on keeping the machine-learned, the rule-based, and the generative parts of the system cleanly separated, testable independently, and safe to compose.
 
+**This repo now contains two generations of the same architecture.** V1 (below, through "Future roadmap") is a binary failure classifier on the AI4I 2020 dataset. **[V2](#v2-remaining-useful-life-nasa-c-mapss)** upgrades the ML core to Remaining Useful Life (RUL) regression on NASA's C-MAPSS turbofan dataset, and extends the architecture with model uncertainty and a richer, traceable decision engine. The core discipline — deterministic rules between the model and any decision, human review before anything urgent, an LLM that can explain but never override — carries over unchanged.
+
 ## Project purpose
 
 Most "AI predictive maintenance" demos stop at a probability score. That's not a decision a maintenance planner can act on by itself — the same failure probability means something very different for a single, uninstrumented pump with no backup than for one of three redundant fans. This project builds the layer most demos skip: turning a risk score plus the asset's real-world context (criticality, redundancy, known failure modes) into an actual recommended action, with a deterministic, auditable trail from score to decision, and a human always in the loop before anything high-risk is acted on.
@@ -206,7 +208,118 @@ Lets you pick an example asset, enter telemetry, and see the risk score, risk ba
 ```bash
 pytest -q
 ```
-53 tests, covering every deterministic stage of the pipeline: data loading validation, feature engineering, evaluation metrics, risk-band thresholds, every branch of the decision rules (plus invalid-input errors), asset context lookup, and the API (including `/health`, `/predict`, and its validation/404 error paths). The LLM explainer is tested with a mocked Anthropic client — real requests/response wiring is verified without a live API call (see Limitations).
+279 tests total (53 V1 + 226 V2), covering every deterministic stage of both pipelines: data loading validation, feature engineering, evaluation metrics, risk-band/health-state thresholds, every branch of the decision rules (plus invalid-input errors), asset context lookup, the API (including `/health`, `/predict`, and its validation/404 error paths), and V2's engine-level splitting, temporal features, error analysis, uncertainty extraction, and the NASA test-set evaluation. The LLM explainer is tested with a mocked Anthropic client — real requests/response wiring is verified without a live API call (see Limitations).
+
+## V2: Remaining Useful Life (NASA C-MAPSS)
+
+V1 answers "will this fail?" as a yes/no classification from one telemetry snapshot. V2 answers a harder, more useful question: **"how many operating cycles does this engine have left?"** — a regression problem over a real time-series degradation dataset, built up in eleven deliberate steps rather than jumping straight to a finished model.
+
+### Dataset
+
+**NASA C-MAPSS** (Commercial Modular Aero-Propulsion System Simulation) — simulated turbofan jet engine run-to-failure data. This project uses the **FD001** subset only: one operating condition (sea-level flight), one fault mode (High-Pressure Compressor degradation), 100 training engines and 100 test engines. Each row is one flight cycle for one engine; a row has 3 operational settings and 21 raw sensor readings (temperatures, pressures, speeds, fuel flow around the engine core) — see `src/config.py`'s `SENSOR_METADATA` for what each one physically measures. Files are committed under `data/raw/cmapss/FD001/` so a fresh clone needs no download.
+
+`train_FD001.txt` engines run to simulated failure — RUL is calculable directly (`max_cycle − current_cycle`). `test_FD001.txt` engines are deliberately truncated *before* failure; `RUL_FD001.txt` gives NASA's true remaining life measured from each engine's *last observed* test cycle. Step 11 (below) explains why these two files can't be treated the same way.
+
+### Architecture
+
+```
+NASA training telemetry (train_FD001, 21 sensors x cycle)
+        │
+        ▼
+Sensor screening (Step 4)         src/sensor_screening.py
+  drop constant/near-constant sensors, using training data only
+        │
+        ▼
+Feature engineering (Steps 5-6)   src/cmapss_features.py
+  current-cycle features + causal rolling mean/std/delta/trend
+  (never a future cycle, never crosses an engine boundary)
+        │
+        ▼
+Random Forest regressor (Steps 5-6)   src/train_rul_temporal.py
+  engine-level train/validation split, evaluated with MAE/RMSE (Step 7)
+        │
+        ▼
+   predicted RUL
+        │
+        ├──────────────────────────────┐
+        ▼                              ▼
+Health state (Step 8)          Ensemble uncertainty (Step 10)
+  HEALTHY / WATCH / PLAN /       src/uncertainty.py
+  ACTION                         tree-disagreement -> model_confidence
+        │                              │
+        └──────────────┬───────────────┘
+                        ▼
+        Deterministic decision engine (Step 9)
+        src/decision_engine.py - traceable, ID'd rules
+                        ▲
+                        │
+        SYNTHETIC asset context: criticality,
+        redundancy, maintenance lead time
+                        │
+                        ▼
+        Maintenance action + rule-by-rule trace
+
+Official FD001 test set (Step 11) - final, one-shot held-out evaluation
+of everything above
+```
+
+**The same discipline as V1, extended:** the model only ever outputs a number; a fixed, testable lookup turns that number into a health state; a separate, fixed, testable rule set turns the health state *plus* asset context into an action. Neither the model nor a future LLM can skip a link in that chain or override what a rule decided.
+
+### How to run each stage
+
+```bash
+python -m src.sensor_screening       # Step 4  - which of the 21 sensors carry information
+python -m src.train_rul_baseline     # Step 5  - baseline RF, current-cycle features only
+python -m src.train_rul_temporal     # Step 6  - + causal rolling/trend features
+python -m src.run_error_analysis     # Step 7  - error by RUL band, over/under-prediction
+python -m src.run_health_state       # Step 8  - RUL -> HEALTHY/WATCH/PLAN/ACTION
+python -m src.run_decision_engine    # Step 9  - + synthetic asset context -> action
+python -m src.run_uncertainty_analysis  # Step 10 - Random Forest tree-disagreement confidence
+python -m src.run_test_evaluation    # Step 11 - final evaluation on the official NASA test set
+```
+
+Each script is also a runnable report: it prints its own explanation, tables and metrics, and — from Step 5 onward — saves outputs under `models/` (git-ignored) or `results/` / `artifacts/` (generated, not committed).
+
+### Key results
+
+**Model comparison** (validation set, 20 held-out engines, 4,070 cycle-level rows):
+
+| Model | Features | Val MAE | Val RMSE |
+|---|---|---|---|
+| Baseline RF (Step 5) | 18 (current cycle only) | 10.84 | 15.97 |
+| Temporal RF (Step 6) | 102 (+ rolling/delta/trend) | 9.95 | 14.94 |
+
+The temporal model won everywhere, but by more near failure (critical-band MAE 2.77 vs. 3.89) than overall — a reminder not to assume an aggregate improvement transfers evenly (Step 7).
+
+**Official NASA test set** (Step 11 — the one held-out, one-shot evaluation in this project):
+
+| Dataset | n | MAE | RMSE |
+|---|---|---|---|
+| Validation (cycle-level) | 4,070 | 9.95 | 14.94 |
+| **Official FD001 test** (engine-level, final cycle only) | 100 | **13.37** | **18.41** |
+
+Test performance is materially worse than validation — the honest result, reported without retuning against it (see "Test-set discipline" below). Health-state accuracy on the test set: 0.82 overall, ACTION precision 1.00 / recall 0.80. Zero cases of "near failure, badly over-predicting, and the model's own trees were confidently agreeing" — the specific dangerous failure mode Step 10 was built to catch.
+
+**Uncertainty** (Step 10): Random Forest tree-prediction disagreement correlates with actual error at 0.64 on validation — a real, checkable relationship, not an assumed one. It is called an "ensemble prediction range", never a "confidence interval": empirical coverage of the trees' own [p10, p90] range came out at 89.9% on validation and 83.0% on test, not a calibrated 80%, because the trees share training data and are not independent.
+
+### Test-set discipline
+
+`src/run_test_evaluation.py` is the *only* script that reads `test_FD001.txt` / `RUL_FD001.txt`, and it runs once, as a final exam, not a scratchpad — its own module docstring says so explicitly. If test performance disappoints, the correct response is to report it plainly, not to quietly retune sensor screening, features, or thresholds until the number improves; doing that turns the test set into just another validation set and the resulting score stops meaning what a held-out score is supposed to mean.
+
+**Training / validation / test, in one line each:** training is revision (how well the model fits engines it studied); validation is the mock exam (used repeatedly, during development, to compare choices); test is the final exam (seen once, after every modelling decision was already locked in).
+
+### What's NASA-validated vs. synthetic
+
+- **NASA-supported** (evaluated against real ground truth): telemetry, sensor screening, RUL regression, prediction error, ensemble uncertainty, and health-state accuracy.
+- **Synthetic** (invented for this learning project — NASA C-MAPSS contains none of it): asset criticality, redundancy, maintenance lead time, and therefore the final maintenance *recommendation* itself. `src/synthetic_asset_profiles.py` and every `AssetContext` in the decision-engine examples are clearly marked `source="SYNTHETIC_LEARNING_EXERCISE"` for exactly this reason. A real deployment would source these from an asset register/FMEA, a P&ID or knowledge graph, and a CMMS respectively.
+
+### V2 limitations
+
+- **FD001 only.** One operating condition, one fault mode — the simplest of C-MAPSS's four subsets. FD002–FD004 (multiple operating conditions/fault modes) are untouched.
+- **Capped RUL.** The model is trained on `rul_capped` (ceilinged at 125 cycles) and cannot be meaningfully interpreted above that — test/validation evaluation compares against the capped target for this reason (see Step 11).
+- **Ensemble disagreement ≠ full predictive uncertainty.** It reflects the trees' agreement with each other, not aleatoric noise, true epistemic gaps, out-of-distribution risk, or sensor-quality issues — see `src/uncertainty.py`'s module docstring.
+- **Decision-engine thresholds and asset profiles are placeholders,** not calibrated against real cost/consequence data — same caveat as V1's risk bands, one level higher up the stack.
+- **No LSTM/sequence model yet.** The regression model is tabular (Random Forest on engineered features), per CLAUDE.md's principle of establishing a scikit-learn baseline before deep learning.
 
 ## Project structure
 
@@ -229,7 +342,26 @@ pytest -q
 | `src/agent.py` | Orchestrates the full pipeline for one asset. |
 | `src/api.py` | FastAPI endpoints (`/health`, `/predict`). |
 | `src/ui.py` | Streamlit UI. |
-| `tests/` | 53 automated tests. |
+| `tests/` | 279 automated tests (53 V1 + 226 V2). |
+| **V2 (NASA C-MAPSS)** | |
+| `data/raw/cmapss/FD001/` | NASA C-MAPSS FD001 train/test/RUL files, committed for a no-download clone. |
+| `src/cmapss_loader.py` | Load and validate FD001's raw, header-less text files. |
+| `src/rul.py` | Compute raw and capped RUL labels from run-to-failure training data. |
+| `src/sensor_screening.py` | Step 4: flag constant/near-constant sensors from training data only. |
+| `src/engine_split.py` | Leakage-safe train/validation split by `unit_number`, never by row. |
+| `src/train_rul_baseline.py` | Step 5: current-cycle-only baseline Random Forest. |
+| `src/cmapss_features.py` | Step 6: causal rolling mean/std/delta/trend features, per engine. |
+| `src/train_rul_temporal.py` | Step 6: baseline + temporal-feature model comparison. |
+| `src/evaluate_rul.py` | MAE/RMSE for RUL regression (version-agnostic RMSE). |
+| `src/error_analysis.py` / `error_analysis_plots.py` | Step 7: error by RUL band, over/under-prediction, threshold diagnostics. |
+| `src/health_state.py` / `health_state_plots.py` | Step 8: RUL → HEALTHY/WATCH/PLAN/ACTION, and evaluation against actual RUL. |
+| `src/decision_engine.py` | Step 9: deterministic, traceable maintenance decision rules + asset context. |
+| `src/synthetic_asset_profiles.py` | SYNTHETIC example asset contexts (criticality/redundancy/lead time) - NASA has none of this. |
+| `src/uncertainty.py` / `uncertainty_plots.py` | Step 10: Random Forest tree-disagreement → `model_confidence`. |
+| `src/evaluate_test_set.py` / `test_evaluation_plots.py` | Step 11: official FD001 test-set evaluation (loads saved model, never refits). |
+| `src/nasa_score.py` | The PHM08/C-MAPSS asymmetric scoring function (secondary metric). |
+| `src/run_*.py` | One runnable report per step (`run_error_analysis.py`, `run_health_state.py`, `run_decision_engine.py`, `run_uncertainty_analysis.py`, `run_test_evaluation.py`). |
+| `results/` | Generated CSV/JSON outputs from Steps 7-11 (not committed - regenerate via the `run_*.py` scripts above). |
 
 ## Limitations
 
@@ -258,6 +390,17 @@ Being explicit about these matters as much as the working parts do:
 - [x] Stage 11: Asset context
 - [x] Stage 12: Simple UI
 - [x] Stage 13: Tests and README
-- [ ] Stage 14: Upgrade to time-series remaining-useful-life (RUL) model (e.g. NASA C-MAPSS), predicting "how long until failure" instead of "will it fail"
+- [x] Stage 14: Upgrade to time-series remaining-useful-life (RUL) model — see [V2](#v2-remaining-useful-life-nasa-c-mapss) above:
+  - [x] Step 1: Load and structure FD001
+  - [x] Step 2: Calculate raw training RUL
+  - [x] Step 3: Create capped RUL
+  - [x] Step 4: Screen low-information sensors
+  - [x] Step 5: Train baseline Random Forest (current-cycle features)
+  - [x] Step 6: Add causal temporal (rolling/delta/trend) features
+  - [x] Step 7: Operationally meaningful error analysis (RUL bands, over/under-prediction)
+  - [x] Step 8: Convert predicted RUL into deterministic health states
+  - [x] Step 9: Deterministic maintenance decision engine + synthetic asset context
+  - [x] Step 10: Derive model confidence from Random Forest tree disagreement
+  - [x] Step 11: Evaluate the full pipeline on the official NASA FD001 test set
 
-Beyond Stage 14, worth considering next: probability calibration (`CalibratedClassifierCV`) so risk-band thresholds mean what they claim; a real live-call integration test for the explainer, opt-in and skipped without an API key; persisting prediction history for trend analysis; and cost-based threshold tuning once real failure/false-alarm costs are known.
+Beyond V2's Step 11, worth considering next: an LLM explanation layer for V2 (Step 10's docstring already flags this — explain the decision, never override it); probability calibration (`CalibratedClassifierCV`) for V1 so risk-band thresholds mean what they claim; a real live-call integration test for the explainer, opt-in and skipped without an API key; persisting prediction history for trend analysis; and cost-based threshold tuning for both V1's risk bands and V2's decision-engine thresholds once real failure/false-alarm costs are known.
