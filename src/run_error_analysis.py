@@ -80,19 +80,21 @@ def _prepare_split():
 
 
 def _train_and_predict(train_split_df, val_split_df, feature_columns):
+    """Returns (fitted_model, val_predictions) - the model itself is needed by
+    Step 10 (src/run_uncertainty_analysis.py) to read model.estimators_."""
     X_train, y_train = build_modeling_dataset(train_split_df, feature_columns)
     X_val, _ = build_modeling_dataset(val_split_df, feature_columns)
 
     model = train_baseline_rf(X_train, y_train)
     val_predictions = build_predictions_df(val_split_df, model.predict(X_val))
-    return val_predictions
+    return model, val_predictions
 
 
 if __name__ == "__main__":
     train_split_df, val_split_df, baseline_columns, temporal_columns = _prepare_split()
 
-    predictions_a = _train_and_predict(train_split_df, val_split_df, baseline_columns)
-    predictions_b = _train_and_predict(train_split_df, val_split_df, temporal_columns)
+    _, predictions_a = _train_and_predict(train_split_df, val_split_df, baseline_columns)
+    _, predictions_b = _train_and_predict(train_split_df, val_split_df, temporal_columns)
 
     overall_mae_a = predictions_a["error"].abs().mean()
     overall_mae_b = predictions_b["error"].abs().mean()

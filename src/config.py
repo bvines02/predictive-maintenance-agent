@@ -79,3 +79,31 @@ SENSOR_METADATA = {
     "sensor_20": {"symbol": "W31", "name": "HPT coolant bleed", "unit": "lbm/s", "expected_trend": "falls"},
     "sensor_21": {"symbol": "W32", "name": "LPT coolant bleed", "unit": "lbm/s", "expected_trend": "falls"},
 }
+
+
+# V2 Step 8 - predicted RUL -> operational health state.
+# Placeholders for maintenance planning horizons, NOT physical truths. A state
+# boundary is "predicted RUL <= value": ACTION <= 15, PLAN <= 30, WATCH <= 60,
+# anything above `watch` is HEALTHY. Later steps will combine these with
+# uncertainty, criticality, lead time and redundancy - this dict is the only
+# place the numbers are written down.
+HEALTH_THRESHOLDS = {"watch": 60, "plan": 30, "action": 15}
+
+HEALTH_STATE_ARTIFACTS_DIR = ARTIFACTS_DIR / "health_state"
+HEALTH_STATE_PREDICTIONS_PATH = RESULTS_DIR / "health_state_predictions.csv"
+HEALTH_STATE_CONFUSION_MATRIX_PATH = RESULTS_DIR / "health_state_confusion_matrix.csv"
+
+# V2 Step 9 - deterministic maintenance decision engine outputs.
+DECISION_ENGINE_RESULTS_PATH = RESULTS_DIR / "decision_engine_results.csv"
+DECISION_ACTION_DISTRIBUTION_PATH = RESULTS_DIR / "decision_action_distribution.csv"
+
+# V2 Step 10 - Random Forest ensemble-disagreement uncertainty outputs.
+VALIDATION_PREDICTIONS_WITH_UNCERTAINTY_PATH = RESULTS_DIR / "validation_predictions_with_uncertainty.csv"
+UNCERTAINTY_SUMMARY_PATH = RESULTS_DIR / "uncertainty_summary.csv"
+UNCERTAINTY_ARTIFACTS_DIR = ARTIFACTS_DIR / "uncertainty"
+
+# V2 Step 11 - official FD001 test-set evaluation outputs.
+FD001_TEST_PREDICTIONS_PATH = RESULTS_DIR / "fd001_test_predictions.csv"
+FD001_TEST_METRICS_PATH = RESULTS_DIR / "fd001_test_metrics.json"
+FD001_TEST_HEALTH_CONFUSION_PATH = RESULTS_DIR / "fd001_test_health_confusion_matrix.csv"
+FD001_TEST_PLOTS_DIR = RESULTS_DIR / "plots"
