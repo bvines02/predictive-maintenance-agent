@@ -7,10 +7,12 @@ import pytest
 from src.pipeline_explorer import (
     EXPLORER_RULE_IDS,
     PARITY_CASES_PATH,
+    PROMPT_CASES_PATH,
     build_parity_cases,
     decision_summary,
     explorer_decision,
     parity_document,
+    prompt_document,
 )
 
 DEFAULT_THRESHOLDS = {"action": 15, "plan": 30, "watch": 60}
@@ -76,3 +78,17 @@ def test_committed_parity_file_is_current():
     and make the TypeScript port in app/src/pipeline/rules.ts pass again."""
     committed = json.loads(PARITY_CASES_PATH.read_text())
     assert committed == json.loads(json.dumps(parity_document()))
+
+
+def test_committed_prompt_cases_are_current():
+    """If this fails, the V2 prompt changed: run `python -m src.pipeline_explorer`
+    and make app/src/pipeline/prompt.ts rebuild it exactly."""
+    committed = json.loads(PROMPT_CASES_PATH.read_text())
+    assert committed == json.loads(json.dumps(prompt_document()))
+
+
+def test_prompt_cases_include_half_even_ties():
+    # 35.25 must print as 35.2 (Python rounds exact ties to even); the TS port must match.
+    prompts = [case["prompt"] for case in prompt_document()["cases"]]
+    assert any("Predicted remaining useful life: 35.2 cycles" in p for p in prompts)
+    assert any("Predicted remaining useful life: 12.8 cycles" in p for p in prompts)

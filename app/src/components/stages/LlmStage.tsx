@@ -87,7 +87,7 @@ export function LlmStage({ engine, i, decision, params }: Props) {
             >
               {state.status === 'loading' ? 'Asking the LLM…' : state.status === 'idle' || stale ? 'Explain this decision' : 'Regenerate'}
             </button>
-            <span className="text-xs text-ink-3">Live call via POST /explain</span>
+            <span className="text-xs text-ink-3">Live call via POST /api/explain</span>
           </div>
 
           {stale && (
@@ -101,10 +101,10 @@ export function LlmStage({ engine, i, decision, params }: Props) {
           {state.status === 'offline' && (
             <div className="text-sm text-ink-2">
               <p className="mb-2">
-                The explanation API isn't reachable from here. It runs on your own machine, next to your API key. Everything above
-                still works, because none of it depends on the LLM.
+                The explanation API isn't reachable from this page. Everything above still works, because none of it depends
+                on the LLM.
               </p>
-              <p className="mb-1 text-xs">To enable this step, run the app locally and start the API from the repo root:</p>
+              <p className="mb-1 text-xs">On Vercel it is the <code className="font-mono">api/explain</code> function. Running locally, start the API from the repo root:</p>
               <pre className="overflow-x-auto rounded bg-surface px-2 py-1.5 font-mono text-xs">uvicorn src.api:app --port 8000</pre>
             </div>
           )}
@@ -141,8 +141,8 @@ function Result({ request, response, browserDecision }: { request: ExplainReques
         </blockquote>
       ) : (
         <p className="text-sm text-ink-2">
-          No <code className="font-mono text-xs">ANTHROPIC_API_KEY</code> on the API server, so the LLM wasn't called. The prompt it
-          would receive is below — add the key to <code className="font-mono text-xs">.env</code> and restart the API.
+          No <code className="font-mono text-xs">ANTHROPIC_API_KEY</code> is set on the server, so the LLM wasn't called. The prompt it
+          would receive is below. Add the key to the Vercel project's environment variables (or <code className="font-mono text-xs">.env</code> locally) and redeploy.
         </p>
       )}
       <details className="text-xs">

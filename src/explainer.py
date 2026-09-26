@@ -120,8 +120,8 @@ Middle 80% of individual tree predictions: {prediction["prediction_p10"]:.1f} to
 Model confidence (from how closely the trees agree, not a calibrated probability): {decision["model_confidence"]}
 
 Health state: {decision["health_state"]}
-(ACTION if RUL <= {health_thresholds["action"]}, PLAN if <= {health_thresholds["plan"]}, \
-WATCH if <= {health_thresholds["watch"]}, otherwise HEALTHY)
+(ACTION if RUL <= {health_thresholds["action"]:g}, PLAN if <= {health_thresholds["plan"]:g}, \
+WATCH if <= {health_thresholds["watch"]:g}, otherwise HEALTHY)
 
 Maintenance lead time: {decision["maintenance_lead_time_cycles"]:g} cycles (planning buffer {lead_time_buffer_cycles:g} cycles)
 

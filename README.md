@@ -340,12 +340,24 @@ cd app && npm install && npm run dev        # http://localhost:5173 - works with
 uvicorn src.api:app --port 8000             # optional, from the repo root: enables step 7 (needs ANTHROPIC_API_KEY in .env)
 ```
 
+### Deploy to Vercel
+
+The app deploys as a static Vite site plus one Vercel Function (`app/api/explain.ts`) for the LLM step. No Python runs on Vercel.
+
+1. In Vercel, **Add New → Project** and import this GitHub repository.
+2. Set **Root Directory** to `app`. The framework (Vite), build command and output directory come from `app/vercel.json`.
+3. Under **Environment Variables**, add `ANTHROPIC_API_KEY`. Without it, step 7 still shows the decision and the exact prompt, but makes no LLM call.
+4. Deploy. Every push to the connected branch redeploys.
+
+The function mirrors the Python `POST /explain`: it re-derives the decision with the rules port before prompting, and its prompt is checked byte for byte against the Python prompt (`app/src/pipeline/prompt_cases.json`). Anyone who can open the deployment can spend your Anthropic key through step 7, so keep Vercel's Deployment Protection on, or leave the key unset for a public demo.
+
 How it stays honest:
 
 - **Real model output, frozen.** `python -m src.export_pipeline_fixture` trains the exact Step 6 temporal Random Forest on the Step 5 split and writes every cycle of all 100 `train_FD001` engines to `app/public/data/` (committed, ~5 MB, one file per engine). It reproduces the validation MAE 9.95 / RMSE 14.94 above.
 - **In-sample engines are labelled.** 80 of the 100 engines trained the model, so their predictions look far better than the model is. The app opens on a held-out engine and flags in-sample ones.
 - **Rules are ported, and checked.** Health states and decisions run in TypeScript (`app/src/pipeline/rules.ts`) so edits are instant. `app/src/pipeline/parity_cases.json` holds 810 boundary cases decided by the real Python engine; the app's tests must reproduce every one, and `tests/test_pipeline_explorer.py` fails if that file is stale. CI runs both.
-- **The LLM explains a Python decision, not the browser's.** `POST /explain` receives the prediction and parameters, re-runs the decision in the Python engine, and only then builds the prompt (`build_rul_explanation_prompt` in `src/explainer.py`). The app shows whether Python agreed with the browser. Without an API key the endpoint still returns the decision and the prompt.
+- **The LLM explains a server-side decision, not the browser's.** Locally, `POST /explain` re-runs the decision in the Python engine; on Vercel, `api/explain.ts` re-runs it with the parity-tested rules port. Only then is the prompt built. The app shows whether the server agreed with the browser. Without an API key both still return the decision and the prompt.
+- **One prompt, two implementations.** `app/src/pipeline/prompt.ts` must rebuild every prompt in `prompt_cases.json` (generated from `build_rul_explanation_prompt`) exactly, including Python's half-to-even rounding.
 
 ## Project structure
 
