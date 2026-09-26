@@ -10,6 +10,10 @@ change the risk level, the recommended action, or whether human review is
 required. The prompt below says so explicitly, and nothing this module
 returns is fed back into decide_maintenance_action() - it's a dead end that
 produces text for a human to read, not a decision the pipeline acts on.
+
+V2 (build_rul_explanation_prompt / generate_rul_explanation) follows the same
+rule for the RUL pipeline: it explains a decision src/pipeline_explorer.py
+already made, and never sees raw telemetry.
 """
 
 import os
@@ -87,6 +91,71 @@ facts not given above."""
     )
     return response.content[0].text
 
+
+
+def build_rul_explanation_prompt(decision: dict, prediction: dict, health_thresholds: dict, lead_time_buffer_cycles: float) -> str:
+    """V2 prompt: explain an already-made RUL decision (src/pipeline_explorer.py).
+
+    Pure function, kept separate from the API call so the exact prompt can be
+    tested and shown to the user (the Pipeline Explorer displays it) - what
+    the LLM receives is part of what the architecture promises.
+
+    Args:
+        decision: pipeline_explorer.decision_summary() output.
+        prediction: {"unit_number", "time_cycles", "prediction_p10", "prediction_p90"}
+            - identifiers and the ensemble range only; never raw telemetry.
+        health_thresholds: {"action", "plan", "watch"} RUL cut-offs in force.
+        lead_time_buffer_cycles: the LEAD_02 planning margin in force.
+    """
+    trace_lines = "\n".join(f"- {step['rule_id']}: {step['reason']}" for step in decision["trace"])
+    return f"""You are explaining a turbofan engine maintenance decision to a human reviewer.
+The decision has ALREADY been made by deterministic rules - do not change it,
+second-guess it, or suggest a different action. Only explain it clearly.
+
+Engine {prediction["unit_number"]}, flight cycle {prediction["time_cycles"]} (NASA C-MAPSS FD001, simulated data)
+
+Model prediction (Random Forest, 200 trees):
+Predicted remaining useful life: {decision["predicted_rul"]:.1f} cycles
+Middle 80% of individual tree predictions: {prediction["prediction_p10"]:.1f} to {prediction["prediction_p90"]:.1f} cycles
+Model confidence (from how closely the trees agree, not a calibrated probability): {decision["model_confidence"]}
+
+Health state: {decision["health_state"]}
+(ACTION if RUL <= {health_thresholds["action"]}, PLAN if <= {health_thresholds["plan"]}, \
+WATCH if <= {health_thresholds["watch"]}, otherwise HEALTHY)
+
+Maintenance lead time: {decision["maintenance_lead_time_cycles"]:g} cycles (planning buffer {lead_time_buffer_cycles:g} cycles)
+
+Decision (already made, do not change):
+Recommended action: {decision["recommended_action"]} - {decision["recommended_action_meaning"]}
+Human review required: {decision["requires_human_review"]}
+Rules applied, in order:
+{trace_lines}
+
+Write 3-5 short sentences in plain maintenance language explaining why this
+prediction led to this action: how the health state set the starting point,
+what each rule that fired changed and why, and what the model's confidence
+means for how much weight to put on the number. Do not invent numbers or
+facts not given above, and do not discuss asset criticality or redundancy -
+they are deliberately not part of this decision."""
+
+
+def generate_rul_explanation(prompt: str) -> str:
+    """Send a prompt from build_rul_explanation_prompt() to the LLM; return its text.
+
+    Raises RuntimeError without an API key, like generate_explanation().
+    """
+    if not explanation_available():
+        raise RuntimeError(
+            "ANTHROPIC_API_KEY is not set - cannot generate an explanation. "
+            "Copy .env.example to .env and add a key."
+        )
+    client = anthropic.Anthropic()
+    response = client.messages.create(
+        model=MODEL_NAME,
+        max_tokens=400,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.content[0].text
 
 if __name__ == "__main__":
     if not explanation_available():

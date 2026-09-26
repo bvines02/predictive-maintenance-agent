@@ -321,6 +321,32 @@ Test performance is materially worse than validation — the honest result, repo
 - **Decision-engine thresholds and asset profiles are placeholders,** not calibrated against real cost/consequence data — same caveat as V1's risk bands, one level higher up the stack.
 - **No LSTM/sequence model yet.** The regression model is tabular (Random Forest on engineered features), per CLAUDE.md's principle of establishing a scikit-learn baseline before deep learning.
 
+## Pipeline Explorer (interactive V2 visualisation)
+
+`app/` is a lightweight React app that walks one engine through the whole V2 pipeline, cycle by cycle, so you can see each stage's output and how it feeds the next:
+
+1. **Telemetry in** - the 14 screened sensors over the engine's life, with the window the rolling features read and the future the model can't see
+2. **Feature engineering** - the model's top features and their values at the current cycle
+3. **Random Forest** - predicted vs actual RUL, the spread of the 200 trees' estimates, and feature importances
+4. **Confidence** - tree disagreement mapped to HIGH / MEDIUM / LOW
+5. **Health state** - the threshold lookup, predicted vs actual state across the whole life
+6. **Decision engine** - the rule-by-rule trace and the recommended action across the whole life
+7. **LLM reasoning** - a live explanation of the decision, plus the exact prompt it was given
+
+**Editable:** the three health thresholds (ACTION / PLAN / WATCH) and the maintenance lead time. Every state and decision recomputes instantly. **Excluded:** asset criticality and redundancy - the explorer runs the decision engine with values under which those rules can never fire (`src/pipeline_explorer.py`). Confidence comes from the model, not a dropdown; the lead-time buffer is fixed at the engine default.
+
+```bash
+cd app && npm install && npm run dev        # http://localhost:5173 - works with no Python running
+uvicorn src.api:app --port 8000             # optional, from the repo root: enables step 7 (needs ANTHROPIC_API_KEY in .env)
+```
+
+How it stays honest:
+
+- **Real model output, frozen.** `python -m src.export_pipeline_fixture` trains the exact Step 6 temporal Random Forest on the Step 5 split and writes every cycle of all 100 `train_FD001` engines to `app/public/data/` (committed, ~5 MB, one file per engine). It reproduces the validation MAE 9.95 / RMSE 14.94 above.
+- **In-sample engines are labelled.** 80 of the 100 engines trained the model, so their predictions look far better than the model is. The app opens on a held-out engine and flags in-sample ones.
+- **Rules are ported, and checked.** Health states and decisions run in TypeScript (`app/src/pipeline/rules.ts`) so edits are instant. `app/src/pipeline/parity_cases.json` holds 810 boundary cases decided by the real Python engine; the app's tests must reproduce every one, and `tests/test_pipeline_explorer.py` fails if that file is stale. CI runs both.
+- **The LLM explains a Python decision, not the browser's.** `POST /explain` receives the prediction and parameters, re-runs the decision in the Python engine, and only then builds the prompt (`build_rul_explanation_prompt` in `src/explainer.py`). The app shows whether Python agreed with the browser. Without an API key the endpoint still returns the decision and the prompt.
+
 ## Project structure
 
 | Path | Purpose |
@@ -342,7 +368,13 @@ Test performance is materially worse than validation — the honest result, repo
 | `src/agent.py` | Orchestrates the full pipeline for one asset. |
 | `src/api.py` | FastAPI endpoints (`/health`, `/predict`). |
 | `src/ui.py` | Streamlit UI. |
-| `tests/` | 279 automated tests (53 V1 + 226 V2). |
+| `tests/` | 291 automated Python tests. |
+| **Pipeline Explorer** | |
+| `app/` | Interactive React + TypeScript visualisation of the V2 pipeline (see [Pipeline Explorer](#pipeline-explorer-interactive-v2-visualisation)). |
+| `app/public/data/` | Committed model output for all 100 FD001 training engines. |
+| `app/src/pipeline/rules.ts` | TypeScript port of the health-state and decision rules, checked against `parity_cases.json`. |
+| `src/pipeline_explorer.py` | The explorer's decision context (criticality/redundancy excluded) and the parity-case generator. |
+| `src/export_pipeline_fixture.py` | Trains Model B and exports the app's data. |
 | **V2 (NASA C-MAPSS)** | |
 | `data/raw/cmapss/FD001/` | NASA C-MAPSS FD001 train/test/RUL files, committed for a no-download clone. |
 | `src/cmapss_loader.py` | Load and validate FD001's raw, header-less text files. |

@@ -99,3 +99,48 @@ def test_predict_rejects_wrong_type(client):
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 422
+
+
+EXPLAIN_PAYLOAD = {
+    "unit_number": 7,
+    "time_cycles": 180,
+    "predicted_rul": 12.0,
+    "prediction_p10": 8.0,
+    "prediction_p90": 19.5,
+    "model_confidence": "HIGH",
+    "health_thresholds": {"action": 15, "plan": 30, "watch": 60},
+    "maintenance_lead_time_cycles": 15,
+}
+
+
+def test_explain_rederives_decision_in_python(client, monkeypatch):
+    monkeypatch.setattr("src.api.explanation_available", lambda: True)
+    monkeypatch.setattr("src.api.generate_rul_explanation", lambda prompt: "fake explanation")
+
+    response = client.post("/explain", json=EXPLAIN_PAYLOAD)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"]["recommended_action"] == "INTERVENE_NOW"
+    assert body["decision"]["rule_ids"] == ["BASE_01", "LEAD_01"]
+    assert "INTERVENE_NOW" in body["prompt"]
+    assert body["explanation"] == "fake explanation"
+
+
+def test_explain_without_key_still_returns_decision_and_prompt(client, monkeypatch):
+    monkeypatch.setattr("src.api.explanation_available", lambda: False)
+
+    body = client.post("/explain", json=EXPLAIN_PAYLOAD).json()
+
+    assert body["explanation"] is None
+    assert body["decision"]["health_state"] == "ACTION"
+    assert body["prompt"]
+
+
+def test_explain_rejects_unordered_thresholds(client):
+    payload = {**EXPLAIN_PAYLOAD, "health_thresholds": {"action": 40, "plan": 30, "watch": 60}}
+    assert client.post("/explain", json=payload).status_code == 422
+
+
+def test_explain_rejects_unknown_confidence(client):
+    assert client.post("/explain", json={**EXPLAIN_PAYLOAD, "model_confidence": "SURE"}).status_code == 422

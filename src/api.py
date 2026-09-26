@@ -4,6 +4,8 @@ Responsible for:
 - Exposing HTTP endpoints (e.g. /health, /predict)
 - Validating requests and responses with Pydantic models
 - Calling predict.py / agent.py - no business logic lives here
+- POST /explain for the V2 Pipeline Explorer (app/): re-derives the RUL
+  decision in Python, then asks the LLM to explain it
 
 An API lets any other system (a UI, a CMMS, a script) use the model,
 which a notebook cannot do.
@@ -16,6 +18,8 @@ from pydantic import BaseModel, Field
 
 from src.asset_context import has_redundancy, load_asset_context
 from src.decision_rules import decide_maintenance_action
+from src.explainer import build_rul_explanation_prompt, explanation_available, generate_rul_explanation
+from src.pipeline_explorer import LEAD_TIME_BUFFER_CYCLES, decision_summary, explorer_decision
 from src.predict import load_model, predict_failure_risk
 
 # Loaded once at startup, not per-request - see predict.py's docstring on
@@ -26,7 +30,12 @@ _model = None
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     global _model
-    _model = load_model()
+    # A missing V1 model disables /predict (503) rather than the whole API:
+    # /explain (V2) does not use it.
+    try:
+        _model = load_model()
+    except FileNotFoundError:
+        _model = None
     yield
 
 
@@ -86,6 +95,8 @@ def predict(request: PredictRequest) -> PredictResponse:
     (who/what is this asset) -> decision_rules.py (what to do about it).
     No step is skipped or reordered - see CLAUDE.md's "Engineering principles".
     """
+    if _model is None:
+        raise HTTPException(status_code=503, detail="V1 model not trained - run `python -m src.train_model`.")
     try:
         asset = load_asset_context(request.asset_id)
     except KeyError as exc:
@@ -124,3 +135,66 @@ def predict(request: PredictRequest) -> PredictResponse:
         human_review_required=decision["human_review_required"],
         rationale_code=decision["rationale_code"],
     )
+
+
+class HealthThresholds(BaseModel):
+    action: float
+    plan: float
+    watch: float
+
+
+class ExplainRequest(BaseModel):
+    """What the Pipeline Explorer sends: the model's output and the policy in force.
+
+    Deliberately NOT the browser's decision. /explain re-derives the decision
+    with the real Python engine, so the LLM only ever explains a decision the
+    deterministic rules made - a client cannot hand it one to rationalise.
+    """
+
+    unit_number: int
+    time_cycles: int
+    predicted_rul: float
+    prediction_p10: float
+    prediction_p90: float
+    model_confidence: str = Field(..., description="HIGH / MEDIUM / LOW, from tree disagreement")
+    health_thresholds: HealthThresholds
+    maintenance_lead_time_cycles: float = Field(..., ge=0)
+
+
+class ExplainResponse(BaseModel):
+    decision: dict  # pipeline_explorer.decision_summary() - the Python engine's result
+    prompt: str  # exactly what the LLM received (or would receive)
+    explanation: str | None  # None when no API key is configured
+
+
+@app.post("/explain", response_model=ExplainResponse)
+def explain(request: ExplainRequest) -> ExplainResponse:
+    """V2: decide (Python rules) -> build prompt -> LLM explains. The LLM step is last and read-only."""
+    thresholds = request.health_thresholds.model_dump()
+    try:
+        decision = decision_summary(
+            explorer_decision(
+                request.predicted_rul,
+                request.model_confidence,
+                thresholds,
+                request.maintenance_lead_time_cycles,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    prompt = build_rul_explanation_prompt(
+        decision,
+        {
+            "unit_number": request.unit_number,
+            "time_cycles": request.time_cycles,
+            "prediction_p10": request.prediction_p10,
+            "prediction_p90": request.prediction_p90,
+        },
+        thresholds,
+        LEAD_TIME_BUFFER_CYCLES,
+    )
+    # No key: still return the Python decision and the prompt, so the
+    # explorer can show what the LLM would receive and check parity.
+    explanation = generate_rul_explanation(prompt) if explanation_available() else None
+    return ExplainResponse(decision=decision, prompt=prompt, explanation=explanation)
