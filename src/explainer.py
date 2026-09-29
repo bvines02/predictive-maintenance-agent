@@ -108,13 +108,17 @@ def build_rul_explanation_prompt(decision: dict, prediction: dict, health_thresh
         lead_time_buffer_cycles: the LEAD_02 planning margin in force.
     """
     trace_lines = "\n".join(f"- {step['rule_id']}: {step['reason']}" for step in decision["trace"])
-    return f"""You are explaining a turbofan engine maintenance decision to a human reviewer.
-The decision has ALREADY been made by deterministic rules - do not change it,
-second-guess it, or suggest a different action. Only explain it clearly.
+    return f"""You are explaining a turbofan engine maintenance decision to a university
+student in engineering or computer science. They are numerate and know basic
+statistics, but are new to machine learning and maintenance engineering. The
+decision has ALREADY been made by deterministic rules - do not change it,
+second-guess it, or suggest a different action. Only explain it.
 
 Engine {prediction["unit_number"]}, flight cycle {prediction["time_cycles"]} (NASA C-MAPSS FD001, simulated data)
 
-Model prediction (Random Forest, 200 trees):
+Model prediction (Random Forest: 200 regression trees, each fitted to a bootstrap
+resample of the training rows and considering every feature at each split; the
+point estimate is the mean of the tree outputs):
 Predicted remaining useful life: {decision["predicted_rul"]:.1f} cycles
 Middle 80% of individual tree predictions: {prediction["prediction_p10"]:.1f} to {prediction["prediction_p90"]:.1f} cycles
 Model confidence (from how closely the trees agree, not a calibrated probability): {decision["model_confidence"]}
@@ -131,12 +135,17 @@ Human review required: {decision["requires_human_review"]}
 Rules applied, in order:
 {trace_lines}
 
-Write 3-5 short sentences in plain maintenance language explaining why this
-prediction led to this action: how the health state set the starting point,
-what each rule that fired changed and why, and what the model's confidence
-means for how much weight to put on the number. Do not invent numbers or
-facts not given above, and do not discuss asset criticality or redundancy -
-they are deliberately not part of this decision."""
+Write one paragraph of 150-200 words, in a precise academic register,
+explaining why this prediction led to this action. Cover: how the Random
+Forest's ensemble of trees produces the point estimate and the spread of
+estimates; how the deterministic thresholds map the estimate to the health
+state; what each rule that fired changed and why; and what the model
+confidence implies about the reliability of the estimate, noting that it
+reflects agreement between trees rather than a calibrated probability. Use
+correct technical terms, defining each briefly on first use. Do not invent
+numbers or facts not given above - including details of how the model was
+trained - and do not discuss asset criticality or redundancy - they are
+deliberately not part of this decision."""
 
 
 def generate_rul_explanation(prompt: str) -> str:
@@ -152,7 +161,7 @@ def generate_rul_explanation(prompt: str) -> str:
     client = anthropic.Anthropic()
     response = client.messages.create(
         model=MODEL_NAME,
-        max_tokens=400,
+        max_tokens=700,
         messages=[{"role": "user", "content": prompt}],
     )
     return response.content[0].text

@@ -1,8 +1,9 @@
 import type { HealthThresholds } from '../pipeline/rules'
-import { RUL_AXIS_MAX } from './RulScale'
-import { STATE_COLOR } from './ui'
+import { RUL_AXIS_MAX, RulScale, healthZones } from './RulScale'
+import { STATE_COLOR, StateIcon } from './ui'
 
 interface Props {
+  idPrefix: string
   thresholds: HealthThresholds
   onThresholds: (t: HealthThresholds) => void
   leadTime: number
@@ -14,74 +15,107 @@ interface Props {
 function Slider({
   id,
   label,
+  icon,
   value,
   min,
   max,
   onChange,
-  swatch,
-  hint,
+  tint = 'var(--ink)',
+  isDefault,
 }: {
   id: string
   label: string
+  icon?: React.ReactNode
   value: number
   min: number
   max: number
   onChange: (v: number) => void
-  swatch?: string
-  hint: string
+  tint?: string
+  isDefault: boolean
 }) {
+  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0
   return (
     <div>
-      <div className="mb-0.5 flex items-center justify-between gap-2">
-        <label htmlFor={id} className="flex items-center gap-1.5 text-sm font-medium">
-          {swatch && <span className="h-2.5 w-2.5 rounded-sm" style={{ background: swatch }} />}
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={id} className="flex items-center gap-1.5 text-[13px] font-medium">
+          {icon}
           {label}
+          {!isDefault && <span className="h-1.5 w-1.5 rounded-full bg-series-1" title="Changed from default" />}
         </label>
-        <input
-          type="number"
-          aria-label={`${label} value`}
-          value={value}
-          min={min}
-          max={max}
-          onChange={(e) => {
-            const v = Math.round(Number(e.target.value))
-            if (Number.isFinite(v)) onChange(Math.min(max, Math.max(min, v)))
-          }}
-          className="tabular w-16 rounded border border-line bg-surface px-1.5 py-0.5 text-right text-sm"
-        />
+        <div className="flex items-baseline gap-1">
+          <input
+            type="number"
+            aria-label={`${label} value`}
+            value={value}
+            min={min}
+            max={max}
+            onChange={(e) => {
+              const v = Math.round(Number(e.target.value))
+              if (Number.isFinite(v)) onChange(Math.min(max, Math.max(min, v)))
+            }}
+            className="num tabular w-11 rounded-md bg-surface-2 px-1.5 py-0.5 text-right text-[13px] font-semibold focus:bg-surface"
+          />
+          <span className="text-[11px] text-ink-3">cyc</span>
+        </div>
       </div>
-      <input id={id} type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" />
-      <div className="text-[11px] text-ink-3">{hint}</div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="range mt-1 w-full"
+        style={{ '--fill': `${fill}%`, '--tint': tint } as React.CSSProperties}
+      />
     </div>
   )
 }
 
-export function ParamsPanel({ thresholds: t, onThresholds, leadTime, onLeadTime, buffer, defaults }: Props) {
-  // The sliders' ranges enforce action < plan < watch, so an invalid set can't be entered.
+export function ParamsPanel({ idPrefix, thresholds: t, onThresholds, leadTime, onLeadTime, buffer, defaults }: Props) {
+  const d = defaults.thresholds
+  const changed = t.watch !== d.watch || t.plan !== d.plan || t.action !== d.action || leadTime !== defaults.leadTime
+  const icon = (s: 'WATCH' | 'PLAN' | 'ACTION') => <span className="flex" style={{ color: STATE_COLOR[s] }}><StateIcon state={s} size={13} /></span>
+
+  // The slider ranges enforce action < plan < watch, so an invalid set can't be entered.
   return (
-    <div className="space-y-5">
-      <div>
-        <h3 className="mb-0.5 text-sm font-semibold">Health thresholds</h3>
-        <p className="mb-3 text-xs text-ink-2">Predicted RUL at or below each value enters that state.</p>
-        <div className="space-y-3">
-          <Slider id="t-watch" label="WATCH ≤" swatch={STATE_COLOR.WATCH} value={t.watch} min={t.plan + 1} max={RUL_AXIS_MAX - 5}
-            onChange={(v) => onThresholds({ ...t, watch: v })} hint={`repo default ${defaults.thresholds.watch}`} />
-          <Slider id="t-plan" label="PLAN ≤" swatch={STATE_COLOR.PLAN} value={t.plan} min={t.action + 1} max={t.watch - 1}
-            onChange={(v) => onThresholds({ ...t, plan: v })} hint={`repo default ${defaults.thresholds.plan}`} />
-          <Slider id="t-action" label="ACTION ≤" swatch={STATE_COLOR.ACTION} value={t.action} min={0} max={t.plan - 1}
-            onChange={(v) => onThresholds({ ...t, action: v })} hint={`repo default ${defaults.thresholds.action}`} />
-        </div>
+    <div>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Decision policy</h3>
+        <button
+          onClick={() => {
+            onThresholds(d)
+            onLeadTime(defaults.leadTime)
+          }}
+          disabled={!changed}
+          className="rounded-md px-2 py-0.5 text-xs font-medium text-ink-2 hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+        >
+          Reset
+        </button>
+      </div>
+      <p className="mt-0.5 text-xs leading-relaxed text-ink-3">Organisational choices, not model outputs. Every decision updates live.</p>
+
+      <div className="-mx-1 mt-1">
+        <RulScale zones={healthZones(t)} height={8} zoneOpacity={0.7} axisLabel={null} labels={false} />
       </div>
 
-      <div>
-        <h3 className="mb-0.5 text-sm font-semibold">Maintenance lead time</h3>
-        <p className="mb-3 text-xs text-ink-2">Cycles from deciding to act until the work is complete.</p>
-        <Slider id="lead" label="Lead time" value={leadTime} min={0} max={60} onChange={onLeadTime}
-          hint={`repo default ${defaults.leadTime} · buffer fixed at ${buffer}`} />
+      <div className="mt-1 space-y-3">
+        <div className="text-xs font-medium text-ink-3">Health thresholds · RUL at or below</div>
+        <Slider id={`${idPrefix}-watch`} label="Watch" icon={icon('WATCH')} tint={STATE_COLOR.WATCH} value={t.watch} min={t.plan + 1} max={RUL_AXIS_MAX - 5}
+          onChange={(v) => onThresholds({ ...t, watch: v })} isDefault={t.watch === d.watch} />
+        <Slider id={`${idPrefix}-plan`} label="Plan" icon={icon('PLAN')} tint={STATE_COLOR.PLAN} value={t.plan} min={t.action + 1} max={t.watch - 1}
+          onChange={(v) => onThresholds({ ...t, plan: v })} isDefault={t.plan === d.plan} />
+        <Slider id={`${idPrefix}-action`} label="Action" icon={icon('ACTION')} tint={STATE_COLOR.ACTION} value={t.action} min={0} max={t.plan - 1}
+          onChange={(v) => onThresholds({ ...t, action: v })} isDefault={t.action === d.action} />
       </div>
 
-      <div className="rounded-md bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-ink-2">
-        Criticality and redundancy are excluded. Confidence comes from the model. Lead time is synthetic — NASA C-MAPSS has none.
+      <div className="mt-5 space-y-3 border-t border-line pt-4">
+        <div className="text-xs font-medium text-ink-3">Execution</div>
+        <Slider id={`${idPrefix}-lead`} label="Maintenance lead time" value={leadTime} min={0} max={60} onChange={onLeadTime}
+          isDefault={leadTime === defaults.leadTime} />
+        <p className="text-[11px] leading-relaxed text-ink-3">
+          Cycles from committing to work until it is complete, plus a fixed {buffer}-cycle planning buffer. Synthetic: C-MAPSS records no lead time.
+        </p>
       </div>
     </div>
   )

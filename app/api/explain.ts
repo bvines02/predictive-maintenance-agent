@@ -11,12 +11,13 @@
  * Imports use .js extensions: Vercel compiles each file to ESM, where Node
  * needs them. TypeScript maps them back to the .ts sources.
  */
+/// <reference types="node" />
 import { ACTION_MEANINGS, LEAD_TIME_BUFFER_CYCLES, buildRulPrompt } from '../src/pipeline/prompt.js'
 import { decide, thresholdError, type Confidence, type HealthThresholds } from '../src/pipeline/rules.js'
 
 // Same model and length as generate_rul_explanation() in src/explainer.py.
 export const MODEL = 'claude-sonnet-5'
-const MAX_TOKENS = 400
+const MAX_TOKENS = 700
 
 const json = (body: unknown, status = 200) => Response.json(body, { status })
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)

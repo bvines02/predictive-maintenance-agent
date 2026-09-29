@@ -7,9 +7,9 @@ export function LifeStrip({
   cursor,
   onSelect,
   tooltip,
-  height = 18,
+  height = 16,
 }: {
-  label: string
+  label?: string
   colors: string[]
   cursor: number
   onSelect: (i: number) => void
@@ -22,41 +22,48 @@ export function LifeStrip({
     const rect = e.currentTarget.getBoundingClientRect()
     return Math.min(n - 1, Math.max(0, Math.floor(((e.clientX - rect.left) / rect.width) * n)))
   }
-  const shown = hover ?? null
 
+  const strip = (
+    <div className="relative min-w-0 flex-1">
+      <svg
+        viewBox={`0 0 ${n} ${height}`}
+        preserveAspectRatio="none"
+        className="block w-full cursor-pointer touch-none overflow-hidden rounded-[4px]"
+        style={{ height }}
+        onPointerMove={(e) => {
+          setHover(indexAt(e))
+          if (e.buttons === 1) onSelect(indexAt(e))
+        }}
+        onPointerDown={(e) => onSelect(indexAt(e))}
+        onPointerLeave={() => setHover(null)}
+        role="img"
+        aria-label={`${label ?? 'State'} over the engine's life`}
+      >
+        {/* Runs of equal colour merge into one rect: fewer nodes, no hairline seams. */}
+        {runs(colors).map(([start, end, color]) => (
+          <rect key={start} x={start} y={0} width={end - start} height={height} fill={color} />
+        ))}
+      </svg>
+      <div
+        className="pointer-events-none absolute -inset-y-1 w-[2px] -translate-x-1/2 rounded-full bg-ink"
+        style={{ left: `${((cursor + 0.5) / n) * 100}%`, boxShadow: '0 0 0 2px var(--surface)' }}
+      />
+      {hover !== null && (
+        <div
+          className="card pointer-events-none absolute bottom-full z-20 mb-2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1.5 text-xs"
+          style={{ left: `${((hover + 0.5) / n) * 100}%` }}
+        >
+          {tooltip(hover)}
+        </div>
+      )}
+    </div>
+  )
+
+  if (!label) return strip
   return (
     <div className="flex items-center gap-3">
-      <div className="w-20 shrink-0 text-right text-xs text-ink-2">{label}</div>
-      <div className="relative min-w-0 flex-1">
-        <svg
-          viewBox={`0 0 ${n} ${height}`}
-          preserveAspectRatio="none"
-          className="block w-full cursor-pointer touch-none rounded-sm"
-          style={{ height }}
-          onPointerMove={(e) => {
-            setHover(indexAt(e))
-            if (e.buttons === 1) onSelect(indexAt(e))
-          }}
-          onPointerDown={(e) => onSelect(indexAt(e))}
-          onPointerLeave={() => setHover(null)}
-          role="img"
-          aria-label={`${label} over the engine's life`}
-        >
-          {/* Merge runs of equal colour into one rect: fewer nodes, no hairline seams. */}
-          {runs(colors).map(([start, end, color]) => (
-            <rect key={start} x={start} y={0} width={end - start} height={height} fill={color} />
-          ))}
-          <rect x={cursor - 0.5} y={0} width={Math.max(1, n / 250)} height={height} fill="var(--ink)" />
-        </svg>
-        {shown !== null && (
-          <div
-            className="pointer-events-none absolute bottom-full z-20 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-line bg-surface px-2 py-1 text-xs shadow-lg"
-            style={{ left: `${((shown + 0.5) / n) * 100}%` }}
-          >
-            {tooltip(shown)}
-          </div>
-        )}
-      </div>
+      <div className="w-16 shrink-0 text-right text-xs font-medium text-ink-3">{label}</div>
+      {strip}
     </div>
   )
 }

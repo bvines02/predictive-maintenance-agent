@@ -138,7 +138,627 @@
     "symbol": "NRc",
     "transform": "roll_mean_10"
    }
-  ]
+  ],
+  "feature_columns": [
+   {
+    "feature": "time_cycles",
+    "sensor": null,
+    "symbol": "time_cycles",
+    "transform": "raw"
+   },
+   {
+    "feature": "operational_setting_1",
+    "sensor": null,
+    "symbol": "operational_setting_1",
+    "transform": "raw"
+   },
+   {
+    "feature": "operational_setting_2",
+    "sensor": null,
+    "symbol": "operational_setting_2",
+    "transform": "raw"
+   },
+   {
+    "feature": "operational_setting_3",
+    "sensor": null,
+    "symbol": "operational_setting_3",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_2",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_3",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_4",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_7",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_8",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_9",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_11",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_12",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_13",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_14",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_15",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_17",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_20",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_21",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "raw"
+   },
+   {
+    "feature": "sensor_2_roll_mean_5",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_2_roll_std_5",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_2_roll_mean_10",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_2_roll_std_10",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_2_delta_1",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_2_trend_5",
+    "sensor": "sensor_2",
+    "symbol": "T24",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_3_roll_mean_5",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_3_roll_std_5",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_3_roll_mean_10",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_3_roll_std_10",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_3_delta_1",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_3_trend_5",
+    "sensor": "sensor_3",
+    "symbol": "T30",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_4_roll_mean_5",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_4_roll_std_5",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_4_roll_mean_10",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_4_roll_std_10",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_4_delta_1",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_4_trend_5",
+    "sensor": "sensor_4",
+    "symbol": "T50",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_7_roll_mean_5",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_7_roll_std_5",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_7_roll_mean_10",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_7_roll_std_10",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_7_delta_1",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_7_trend_5",
+    "sensor": "sensor_7",
+    "symbol": "P30",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_8_roll_mean_5",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_8_roll_std_5",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_8_roll_mean_10",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_8_roll_std_10",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_8_delta_1",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_8_trend_5",
+    "sensor": "sensor_8",
+    "symbol": "Nf",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_9_roll_mean_5",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_9_roll_std_5",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_9_roll_mean_10",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_9_roll_std_10",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_9_delta_1",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_9_trend_5",
+    "sensor": "sensor_9",
+    "symbol": "Nc",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_11_roll_mean_5",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_11_roll_std_5",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_11_roll_mean_10",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_11_roll_std_10",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_11_delta_1",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_11_trend_5",
+    "sensor": "sensor_11",
+    "symbol": "Ps30",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_12_roll_mean_5",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_12_roll_std_5",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_12_roll_mean_10",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_12_roll_std_10",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_12_delta_1",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_12_trend_5",
+    "sensor": "sensor_12",
+    "symbol": "phi",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_13_roll_mean_5",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_13_roll_std_5",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_13_roll_mean_10",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_13_roll_std_10",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_13_delta_1",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_13_trend_5",
+    "sensor": "sensor_13",
+    "symbol": "NRf",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_14_roll_mean_5",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_14_roll_std_5",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_14_roll_mean_10",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_14_roll_std_10",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_14_delta_1",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_14_trend_5",
+    "sensor": "sensor_14",
+    "symbol": "NRc",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_15_roll_mean_5",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_15_roll_std_5",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_15_roll_mean_10",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_15_roll_std_10",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_15_delta_1",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_15_trend_5",
+    "sensor": "sensor_15",
+    "symbol": "BPR",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_17_roll_mean_5",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_17_roll_std_5",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_17_roll_mean_10",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_17_roll_std_10",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_17_delta_1",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_17_trend_5",
+    "sensor": "sensor_17",
+    "symbol": "htBleed",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_20_roll_mean_5",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_20_roll_std_5",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_20_roll_mean_10",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_20_roll_std_10",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_20_delta_1",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_20_trend_5",
+    "sensor": "sensor_20",
+    "symbol": "W31",
+    "transform": "trend_5"
+   },
+   {
+    "feature": "sensor_21_roll_mean_5",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "roll_mean_5"
+   },
+   {
+    "feature": "sensor_21_roll_std_5",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "roll_std_5"
+   },
+   {
+    "feature": "sensor_21_roll_mean_10",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "roll_mean_10"
+   },
+   {
+    "feature": "sensor_21_roll_std_10",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "roll_std_10"
+   },
+   {
+    "feature": "sensor_21_delta_1",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "delta_1"
+   },
+   {
+    "feature": "sensor_21_trend_5",
+    "sensor": "sensor_21",
+    "symbol": "W32",
+    "transform": "trend_5"
+   }
+  ],
+  "sample_tree": {
+   "index": 0,
+   "depth": 34,
+   "n_leaves": 5330,
+   "n_training_rows": 10491
+  }
  },
  "operational_settings": {
   "operational_setting_1": {

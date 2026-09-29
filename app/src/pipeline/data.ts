@@ -34,6 +34,8 @@ export interface FixtureIndex {
     validation_rmse: number
     feature_categories: Record<string, { count: number; importance: number }>
     top_features: TopFeature[]
+    feature_columns: { feature: string; sensor: string | null; symbol: string; transform: string }[]
+    sample_tree: { index: number; depth: number; n_leaves: number; n_training_rows: number }
   }
   sensors: SensorInfo[]
   kept_sensors: string[]
@@ -78,5 +80,26 @@ function getJson<T>(path: string): Promise<T> {
   return cache.get(path) as Promise<T>
 }
 
+export type ForestNode =
+  | { feature: number; threshold: number; samples: number; left: number }
+  | { value: number; samples: number }
+
+/** engines/<unit>.forest.json: every tree's estimate per cycle, and one tree's route per cycle. */
+export interface ForestData {
+  unit: number
+  /** Per cycle: all tree estimates, rounded to whole cycles and sorted. */
+  tree_predictions: number[][]
+  sample_tree: {
+    /** Per cycle: node ids from root to leaf. Went left iff the next id is the node's `left`. */
+    paths: number[][]
+    /** Per cycle: the feature value tested at each split along the path. */
+    split_values: number[][]
+    nodes: Record<string, ForestNode>
+  }
+}
+
+export const isLeaf = (n: ForestNode): n is { value: number; samples: number } => 'value' in n
+
 export const loadIndex = () => getJson<FixtureIndex>('./data/index.json')
 export const loadEngine = (unit: number) => getJson<EngineData>(`./data/engines/${unit}.json`)
+export const loadForest = (unit: number) => getJson<ForestData>(`./data/engines/${unit}.forest.json`)

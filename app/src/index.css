@@ -1,21 +1,31 @@
 @import 'tailwindcss';
 
-/* Colour tokens. Status palette = health states (always with icon + label);
-   ordinal blue ramp = action urgency (lighter = calmer on light, reversed on dark). */
+/* Data colours (series, status, action ramp) are the validated dataviz reference
+   palette; surfaces match the validator's surfaces. Status is never colour-alone. */
 :root {
   color-scheme: light;
-  --page: #f4f3f0;
+  --page: #f4f4f1;
   --surface: #fcfcfb;
-  --surface-2: #f0efec;
-  --line: #e3e2dd;
+  --surface-2: #f1f0ec;
+  --surface-sunken: #eceae5;
+  --line: #e1e0d9;
+  --line-strong: #c3c2b7;
+  --ring: rgb(11 11 11 / 0.08);
+  --shadow: 0 1px 2px rgb(11 11 11 / 0.04), 0 4px 16px -4px rgb(11 11 11 / 0.06);
   --ink: #0b0b0b;
   --ink-2: #52514e;
   --ink-3: #75746f;
+  --grid: #e1e0d9;
+  --axis: #898781;
   --series-1: #2a78d6;
   --series-2: #eb6834;
-  --band: rgb(42 120 214 / 0.16);
+  --band: rgb(42 120 214 / 0.12);
   --accent: #4a3aa7;
-  --accent-soft: rgb(74 58 167 / 0.08);
+  --accent-soft: rgb(74 58 167 / 0.07);
+  --kind-data: #75746f;
+  --kind-ml: #2a78d6;
+  --kind-rules: #0b0b0b;
+  --kind-llm: #4a3aa7;
   --good: #0ca30c;
   --warning: #fab219;
   --serious: #ec835a;
@@ -33,21 +43,32 @@
   --act-on-4: #ffffff;
   --act-on-5: #ffffff;
 }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --page: #121211;
+    --page: #0f0f0e;
     --surface: #1a1a19;
-    --surface-2: #232322;
-    --line: #2f2f2d;
+    --surface-2: #222221;
+    --surface-sunken: #141413;
+    --line: #2c2c2a;
+    --line-strong: #383835;
+    --ring: rgb(255 255 255 / 0.08);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.5);
     --ink: #ffffff;
     --ink-2: #c3c2b7;
     --ink-3: #93928a;
+    --grid: #2c2c2a;
+    --axis: #898781;
     --series-1: #3987e5;
     --series-2: #d95926;
-    --band: rgb(57 135 229 / 0.22);
+    --band: rgb(57 135 229 / 0.16);
     --accent: #9085e9;
-    --accent-soft: rgb(144 133 233 / 0.1);
+    --accent-soft: rgb(144 133 233 / 0.08);
+    --kind-data: #93928a;
+    --kind-ml: #3987e5;
+    --kind-rules: #ffffff;
+    --kind-llm: #9085e9;
     --act-0: #184f95;
     --act-1: #256abf;
     --act-2: #3987e5;
@@ -62,20 +83,31 @@
     --act-on-5: #0b0b0b;
   }
 }
+
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --page: #121211;
+  --page: #0f0f0e;
   --surface: #1a1a19;
-  --surface-2: #232322;
-  --line: #2f2f2d;
+  --surface-2: #222221;
+  --surface-sunken: #141413;
+  --line: #2c2c2a;
+  --line-strong: #383835;
+  --ring: rgb(255 255 255 / 0.08);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.5);
   --ink: #ffffff;
   --ink-2: #c3c2b7;
   --ink-3: #93928a;
+  --grid: #2c2c2a;
+  --axis: #898781;
   --series-1: #3987e5;
   --series-2: #d95926;
-  --band: rgb(57 135 229 / 0.22);
+  --band: rgb(57 135 229 / 0.16);
   --accent: #9085e9;
-  --accent-soft: rgb(144 133 233 / 0.1);
+  --accent-soft: rgb(144 133 233 / 0.08);
+  --kind-data: #93928a;
+  --kind-ml: #3987e5;
+  --kind-rules: #ffffff;
+  --kind-llm: #9085e9;
   --act-0: #184f95;
   --act-1: #256abf;
   --act-2: #3987e5;
@@ -94,7 +126,9 @@
   --color-page: var(--page);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-sunken: var(--surface-sunken);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
@@ -105,14 +139,89 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
 body {
   margin: 0;
   background: var(--page);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
 
-input[type='range'] { accent-color: var(--series-1); }
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--ring), var(--shadow);
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; border-radius: 4px; }
+
+/* Range input: thin track, filled progress (via --fill), solid thumb with a surface ring. */
+input[type='range'].range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  --fill: 0%;
+  --tint: var(--series-1);
+}
+input[type='range'].range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--tint) var(--fill), var(--line) var(--fill));
+}
+input[type='range'].range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--tint) var(--fill), var(--line) var(--fill));
+}
+input[type='range'].range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 999px;
+  background: var(--ink);
+  box-shadow: 0 0 0 3px var(--surface), 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 0.12s ease;
+}
+input[type='range'].range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ink);
+  box-shadow: 0 0 0 3px var(--surface), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+input[type='range'].range:active::-webkit-slider-thumb { transform: scale(1.15); }
+
+/* Number fields without spinners. */
+input[type='number'].num::-webkit-inner-spin-button,
+input[type='number'].num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'].num { -moz-appearance: textfield; }
+
+.select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%23898781' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.prose-method p + p { margin-top: 0.75em; }
